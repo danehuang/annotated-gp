@@ -1,0 +1,1135 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Sparse GPs and Subset of Regressors (SoR) &#8212; Annotated GP</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=38455f92" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'src/02_sparse_sor_gp';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="KRR with Tikhonov Regularization" href="02b_krr_tikhonov.html" />
+    <link rel="prev" title="Kernel Ridge Regression (KRR)" href="01b_krr.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="01_intro_gp.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Annotated GP - Home"/>
+    <script>document.write(`<img src="../_static/logo.png" class="logo__image only-dark" alt="Annotated GP - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="01_intro_gp.html">
+                    Gaussian Processes (GP) and GP Regression
+                </a>
+            </li>
+        </ul>
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="01b_krr.html">Kernel Ridge Regression (KRR)</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Sparse GPs and Subset of Regressors (SoR)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02b_krr_tikhonov.html">KRR with Tikhonov Regularization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_var_gp.html">Variational Gaussian Processes (VGPs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_gpwd.html">Gaussian Process Regression with Derivatives (GPwDs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_var_gpwd.html">Variational GPwDs (VGPwDs)</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/danehuang/annotated-gp" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/danehuang/annotated-gp/issues/new?title=Issue%20on%20page%20%2Fsrc/02_sparse_sor_gp.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/src/02_sparse_sor_gp.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Sparse GPs and Subset of Regressors (SoR)</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subset-of-regressors-sor">Subset of Regressors (SoR)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subset-of-regressors-sor-model">Subset of Regressors (SoR) Model</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sor-kernel-approximation">SoR Kernel Approximation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#notation">Notation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fitting-a-subset-of-regressors-sor-gp">Fitting a Subset of Regressors (SoR) GP</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-the-posterior-predictive">Visualizing  the posterior predictive</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fully-independent-training-conditional-fitc-approximation">Fully Independent Training Conditional (FITC) Approximation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Visualizing  the posterior predictive</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix">Appendix</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix-multivariate-normal-facts">Appendix: Multivariate Normal Facts</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#matrix-inversion-lemma-woodbury-sherman-morrison-formula">Matrix Inversion lemma (Woodbury, Sherman, Morrison formula)</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix-sor-simplification">Appendix: SoR Simplification</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix-unifying-view-of-sparse-gp">Appendix: Unifying View of Sparse GP</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#unifying-1-sparse-gp-approximation">Unifying 1: Sparse GP Approximation</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#unifying-2-sor-approximation">Unifying 2: SoR Approximation</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#unifying-2-fitc-approximation">Unifying 2: FITC Approximation</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#unifying-3-comparing-conditionals-of-original-sor-and-fitc">Unifying 3: Comparing conditionals of original, SoR, and FITC</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">random</span><span class="p">,</span> <span class="n">Array</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="kn">from</span> <span class="nn">gp</span> <span class="kn">import</span> <span class="n">k</span><span class="p">,</span> <span class="n">mk_cov</span><span class="p">,</span> <span class="n">cholesky_inv</span><span class="p">,</span> <span class="n">PlotContext</span>
+
+<span class="n">key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>  <span class="c1"># Create a random key</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section class="tex2jax_ignore mathjax_ignore" id="sparse-gps-and-subset-of-regressors-sor">
+<h1>Sparse GPs and Subset of Regressors (SoR)<a class="headerlink" href="#sparse-gps-and-subset-of-regressors-sor" title="Link to this heading">#</a></h1>
+<p>The time complexity of GP regression with <span class="math notranslate nohighlight">\(N\)</span> points is <span class="math notranslate nohighlight">\(O(N^3)\)</span> which is the complexity of solving a system of <span class="math notranslate nohighlight">\(N\)</span> linear equations. Consequently, GP regression is prohibitive for large <span class="math notranslate nohighlight">\(N\)</span>. One way to alleviate the scaling challenges of GP is to use a <strong>sparse GP</strong>. We will introduce a basic sparse GP called a <strong>Subset of Regressors</strong> (<strong>SoR</strong>) [1] and <strong>Fully Indpendent Training Conditional</strong> (FITC) [1].</p>
+<section id="subset-of-regressors-sor">
+<h2>Subset of Regressors (SoR)<a class="headerlink" href="#subset-of-regressors-sor" title="Link to this heading">#</a></h2>
+<p>The <strong>Subset of Regressors</strong> (SoR) approach uses a set of <strong>inducing points</strong> <span class="math notranslate nohighlight">\(\{ z_m | z_m \in \mathbb{R}^D \}_{1 \leq m \leq M}\)</span> for <span class="math notranslate nohighlight">\(M \ll N\)</span> to alleviate the complexity of inference. The main idea of inducing points is to choose a subset of the dataset to approximate the entire dataset. To illustrate this, we create a synthestic dataset of <span class="math notranslate nohighlight">\(10\)</span> datapoints along with <span class="math notranslate nohighlight">\(4\)</span> inducing points now.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">create_toy_sparse_dataset</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+    <span class="c1"># Data points</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">xs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Inducing points</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">zs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+
+    <span class="c1"># Function to approximate</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># Noise</span>
+    <span class="n">Sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="mf">1e-2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">N</span><span class="p">))</span>
+    <span class="n">es</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N</span><span class="p">),</span> <span class="n">cov</span><span class="o">=</span><span class="n">Sigma</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,))</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+
+    <span class="c1"># Observations</span>
+    <span class="n">ys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">f</span><span class="p">)(</span><span class="n">xs</span><span class="p">)</span> <span class="o">+</span> <span class="n">es</span>  <span class="c1"># outputs</span>
+    <span class="k">return</span> <span class="n">xs</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">Sigma</span>
+
+<span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">xs</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">Sigma</span> <span class="o">=</span> <span class="n">create_toy_sparse_dataset</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+<span class="n">N</span><span class="p">,</span> <span class="n">M</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">zs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">PlotContext</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Inducing Points&quot;</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Y&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ax</span><span class="p">:</span>
+    <span class="c1"># Plot dataset</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Dataset&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">f</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">)),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;f (unobserved)&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Plot inducing points</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">zs</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">zs</span><span class="p">),</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Inducing Points&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/f681fa28c29fc89df3b33f2beda90e9fe353e399be91201ce048c671c6150ebe.png" src="../_images/f681fa28c29fc89df3b33f2beda90e9fe353e399be91201ce048c671c6150ebe.png" />
+</div>
+</div>
+</section>
+<section id="subset-of-regressors-sor-model">
+<h2>Subset of Regressors (SoR) Model<a class="headerlink" href="#subset-of-regressors-sor-model" title="Link to this heading">#</a></h2>
+<p>The Subset of Regressors (SoR) model relates the inducing points with the actual dataset with the following joint distribution</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+u &amp; \sim \mathcal{N}(0, K_{uu}) \\
+y | u &amp; \sim \mathcal{N}(K_{xz}K_{zz}^{-1}u, 0) \,.
+\end{align*}\]</div>
+<ul class="simple">
+<li><p>The random variable <span class="math notranslate nohighlight">\(u\)</span> represents the target value at the inducing points.</p></li>
+<li><p>The random variable <span class="math notranslate nohighlight">\(y | u\)</span> represents the value of the outputs in the dataset. It is also normally distributed and is centered at <span class="math notranslate nohighlight">\(K_{xz}K_{zz}^{-1}u\)</span> so that it is interpolated from <span class="math notranslate nohighlight">\(u\)</span>.</p></li>
+<li><p>Note that the covariance of the normal distribution is degenerate.</p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Construct covariance matrices</span>
+<span class="n">K_zz</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span>
+<span class="n">K_zx</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">xs</span><span class="p">)</span>
+
+<span class="c1"># Sample u</span>
+<span class="n">us</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">M</span><span class="p">),</span> <span class="n">cov</span><span class="o">=</span><span class="n">K_zz</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,))</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+
+<span class="c1"># Sample y | u</span>
+<span class="n">ys_given_us</span> <span class="o">=</span> <span class="n">K_zx</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span> <span class="o">@</span> <span class="n">cholesky_inv</span><span class="p">(</span><span class="n">K_zz</span><span class="p">)</span> <span class="o">@</span> <span class="n">us</span>
+
+<span class="c1"># Plot</span>
+<span class="k">with</span> <span class="n">PlotContext</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Prior Samples&quot;</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Y&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ax</span><span class="p">:</span>
+    <span class="c1"># Plot dataset and inducing points</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Dataset&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">f</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">)),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;f (unobserved)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">zs</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">zs</span><span class="p">),</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Inducing Points&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Plot y | u</span>
+    <span class="n">markers</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">marker</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">markers</span><span class="p">):</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys_given_us</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="n">marker</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;y</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> | u</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/004771ea7fc65383243e512eac3b8bf8e741a10f2704d7587ed0c37b4fdf2ecd.png" src="../_images/004771ea7fc65383243e512eac3b8bf8e741a10f2704d7587ed0c37b4fdf2ecd.png" />
+</div>
+</div>
+<section id="sor-kernel-approximation">
+<h3>SoR Kernel Approximation<a class="headerlink" href="#sor-kernel-approximation" title="Link to this heading">#</a></h3>
+<p>The inducing points enable us to create a low rank approximation of the original covariance matrix as in</p>
+<div class="math notranslate nohighlight">
+\[
+Q_{xx} = K_{xz}K_{zz}^{-1}K_{zx} \,.
+\]</div>
+<p>That is, <span class="math notranslate nohighlight">\(Q_{xx} \approx K_{xx}\)</span> and is a “blurry” version of it.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Covariance matrix</span>
+<span class="n">K_xx</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">xs</span><span class="p">,</span> <span class="n">xs</span><span class="p">)</span>
+<span class="n">Q_xx</span> <span class="o">=</span> <span class="n">K_zx</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span> <span class="o">@</span> <span class="n">cholesky_inv</span><span class="p">(</span><span class="n">K_zz</span><span class="p">)</span> <span class="o">@</span> <span class="n">K_zx</span>
+
+<span class="c1"># Plot</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span>
+    <span class="n">K_xx</span><span class="p">,</span> <span class="n">annot</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;coolwarm&#39;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;.2f&#39;</span><span class="p">,</span>
+    <span class="n">xticklabels</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;z_</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">))],</span>
+    <span class="n">yticklabels</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;z_</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">))]</span>
+<span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;K_zz&quot;</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span>
+    <span class="n">Q_xx</span><span class="p">,</span> <span class="n">annot</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;coolwarm&#39;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;.2f&#39;</span><span class="p">,</span>
+    <span class="n">xticklabels</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;x_</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">))],</span>
+    <span class="n">yticklabels</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;z_</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">))]</span>
+<span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;K_zx&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/e236bec0c5853c5c5674ad3bd6d053dda7906b9ddd8f027731fbc4adf2924f6f.png" src="../_images/e236bec0c5853c5c5674ad3bd6d053dda7906b9ddd8f027731fbc4adf2924f6f.png" />
+</div>
+</div>
+</section>
+<section id="notation">
+<h3>Notation<a class="headerlink" href="#notation" title="Link to this heading">#</a></h3>
+<p>As notation, we will also write <span class="math notranslate nohighlight">\(K_{zx} = K_{uf}\)</span>. That is, we will conflate the domain of the kernel with the random variable.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">K_uu</span> <span class="o">=</span> <span class="n">K_zz</span>
+<span class="n">K_uf</span> <span class="o">=</span> <span class="n">K_zx</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="fitting-a-subset-of-regressors-sor-gp">
+<h2>Fitting a Subset of Regressors (SoR) GP<a class="headerlink" href="#fitting-a-subset-of-regressors-sor-gp" title="Link to this heading">#</a></h2>
+<p>To perform GP regression with the SoR approach, we simply replace the covariance <span class="math notranslate nohighlight">\(K_{xx}\)</span> with its approximation <span class="math notranslate nohighlight">\(Q_{xx}\)</span>. The posterior predictive distribution is</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+q_{SoR}(f_* | y) &amp; = \mathcal{N}(Q_{*f}(Q_{ff} + \Sigma)^{-1}y, Q_{* *} - Q_{*f}(Q_{ff} + \Sigma)^{-1}Q_{f*}) \tag{standard prediction with kernel Q} \\
+&amp; = \mathcal{N}(K_{*u}AK_{uf}\Sigma^{-1}y, K_{*u}AK_{u*}) \tag{see Appendix: SoR Simplification}
+\end{align*}\]</div>
+<p>where <span class="math notranslate nohighlight">\(A = (K_{uu} + K_{uf}\Sigma^{-1}K_{fu})^{-1}\)</span> which is again a GP. The second form of <span class="math notranslate nohighlight">\(q_{SoR}\)</span> is more efficient to implement. In particular, the computational complexity is <span class="math notranslate nohighlight">\(O(MN^2)\)</span> since:</p>
+<ol class="arabic simple">
+<li><p>solving <span class="math notranslate nohighlight">\(A^{-1}\)</span> is <span class="math notranslate nohighlight">\(O(M^3)\)</span>,</p></li>
+<li><p>multiplying <span class="math notranslate nohighlight">\(K_{fu}K_{uu}^{-1}K_{uf}\)</span> is <span class="math notranslate nohighlight">\(O(NM^2)\)</span>,</p></li>
+<li><p>and <span class="math notranslate nohighlight">\(M \ll N\)</span>.</p></li>
+</ol>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">calc_A</span><span class="p">(</span><span class="n">Sigma</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">K_uu</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">K_uf</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">cholesky_inv</span><span class="p">(</span><span class="n">K_uu</span> <span class="o">+</span> <span class="n">K_uf</span> <span class="o">@</span> <span class="n">cholesky_inv</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span> <span class="o">@</span> <span class="n">K_uf</span><span class="o">.</span><span class="n">transpose</span><span class="p">())</span>
+
+<span class="k">def</span> <span class="nf">fit_sor</span><span class="p">(</span><span class="n">k</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">xs</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ys</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">zs</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+    <span class="n">K_uu</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span>
+    <span class="n">K_uf</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">xs</span><span class="p">)</span>
+    <span class="n">Sigma_inv</span> <span class="o">=</span> <span class="n">cholesky_inv</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">calc_A</span><span class="p">(</span><span class="n">Sigma</span><span class="p">,</span> <span class="n">K_uu</span><span class="p">,</span> <span class="n">K_uf</span><span class="p">)</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="n">A</span> <span class="o">@</span> <span class="n">K_uf</span> <span class="o">@</span> <span class="n">Sigma_inv</span> <span class="o">@</span> <span class="n">ys</span>
+    <span class="k">return</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">K_uu</span><span class="p">,</span> <span class="n">K_uf</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">alpha</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">fit_sor</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span>
+<span class="n">alpha</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Array([[-0.20053719],
+       [-0.9915333 ],
+       [ 0.9843865 ],
+       [ 0.2127169 ]], dtype=float32)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">sor_post_pred_mean</span><span class="p">(</span><span class="n">k</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">zs</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">x_star</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;SoR posterior predictive mean.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">K_star_u</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">x_star</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">K_star_u</span> <span class="o">@</span> <span class="n">alpha</span>
+
+<span class="k">def</span> <span class="nf">sor_post_pred_cov</span><span class="p">(</span><span class="n">k</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sigma</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">zs</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">K_uu</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">K_uf</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">x_star</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;SoR posterior predictive covariance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">K_star_u</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">x_star</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span>
+    <span class="n">Sigma_inv</span> <span class="o">=</span> <span class="n">cholesky_inv</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">K_star_u</span> <span class="o">@</span> <span class="n">A</span> <span class="o">@</span> <span class="n">K_star_u</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="visualizing-the-posterior-predictive">
+<h3>Visualizing  the posterior predictive<a class="headerlink" href="#visualizing-the-posterior-predictive" title="Link to this heading">#</a></h3>
+<p>We visualize the covariance of the posterior predictive by sampling a few times from the posterior predictive. Observe that the SoR approach results in a degenerate posterior covariance.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create posterior prediction</span>
+<span class="n">test_xs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">post_mean</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x_star</span><span class="p">:</span> <span class="n">sor_post_pred_mean</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">x_star</span><span class="p">))(</span><span class="n">test_xs</span><span class="p">)</span>
+<span class="n">post_cov</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x_star</span><span class="p">:</span> <span class="n">sor_post_pred_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">Sigma</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">K_uu</span><span class="p">,</span> <span class="n">K_uf</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">x_star</span><span class="p">),</span> <span class="n">out_axes</span><span class="o">=</span><span class="mi">0</span><span class="p">)(</span><span class="n">test_xs</span><span class="p">)</span>
+<span class="n">post_ys</span> <span class="o">=</span> <span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,))</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">post_cov</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">post_mean</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">test_xs</span><span class="p">))]</span>
+
+<span class="c1"># Plot</span>
+<span class="k">with</span> <span class="n">PlotContext</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Samples Posterior Predictive (\sigma^2 = 0.01)&quot;</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Y&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ax</span><span class="p">:</span>
+    <span class="c1"># Plot dataset and inducing points</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Dataset&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_xs</span><span class="p">,</span> <span class="p">[</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">test_xs</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;f (unobserved)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">zs</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">zs</span><span class="p">),</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Inducing Points&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Plot posterior</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_xs</span><span class="p">,</span> <span class="n">post_mean</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;dotted&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;p(f_* | y)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_xs</span><span class="p">,</span> <span class="n">post_ys</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/469af89d2a9d85500f089ad32fdfaa6d3afc414c78d9fe456fa0664466b36af5.png" src="../_images/469af89d2a9d85500f089ad32fdfaa6d3afc414c78d9fe456fa0664466b36af5.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="fully-independent-training-conditional-fitc-approximation">
+<h2>Fully Independent Training Conditional (FITC) Approximation<a class="headerlink" href="#fully-independent-training-conditional-fitc-approximation" title="Link to this heading">#</a></h2>
+<p>The degeneracy of the covariance for SoR might motivate us to find a different sparse approximation. The <strong>Fully Independent Training Conditional</strong> (FITC) Approximation is one such alternative to SoR.</p>
+<p>Define</p>
+<div class="math notranslate nohighlight">
+\[
+\Lambda = diag(K_{xx} - Q_{xx} + \Sigma)
+\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight">
+\[
+B = (K_{zz} + K_{zx}\Lambda^{-1}K_{zx})^{-1} \,.
+\]</div>
+<p>Then the posterior is</p>
+<div class="math notranslate nohighlight">
+\[
+q_{FITC}(f_* | y) = \mathcal{N}(K_{*z}BK_{zx}\Lambda^{-1}y, K_{**} - Q_{**} + K_{*z}BK_{z*}) \,.
+\]</div>
+<p>See Appendix: FITC Approximation for more details.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">fit_fitc</span><span class="p">(</span><span class="n">k</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sigma</span><span class="p">,</span> <span class="n">xs</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ys</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">zs</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
+    <span class="c1"># Precompute kernels</span>
+    <span class="n">K_zz</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span>
+    <span class="n">K_zx</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">xs</span><span class="p">)</span>
+    <span class="n">K_xz</span> <span class="o">=</span> <span class="n">K_zx</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+    <span class="n">Q_xx</span> <span class="o">=</span> <span class="n">K_xz</span> <span class="o">@</span> <span class="n">cholesky_inv</span><span class="p">(</span><span class="n">K_zz</span><span class="p">)</span> <span class="o">@</span> <span class="n">K_zx</span>
+    
+    <span class="c1"># Lambda</span>
+    <span class="n">Lambda</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">k</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">])</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">Q_xx</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">Sigma</span><span class="p">))</span>
+    <span class="n">Lambda_inv</span> <span class="o">=</span> <span class="n">cholesky_inv</span><span class="p">(</span><span class="n">Lambda</span><span class="p">)</span>
+    <span class="c1"># B</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">cholesky_inv</span><span class="p">(</span><span class="n">K_zz</span> <span class="o">+</span> <span class="n">K_zx</span> <span class="o">@</span> <span class="n">Lambda_inv</span> <span class="o">@</span> <span class="n">K_xz</span><span class="p">)</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="n">B</span> <span class="o">@</span> <span class="n">K_zx</span> <span class="o">@</span> <span class="n">Lambda_inv</span> <span class="o">@</span> <span class="n">ys</span>
+    <span class="k">return</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">K_zz</span><span class="p">,</span> <span class="n">B</span>
+
+<span class="k">def</span> <span class="nf">fitc_post_pred_mean</span><span class="p">(</span><span class="n">k</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">zs</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">x_star</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;FITC posterior predictive mean.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">K_star_z</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">x_star</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">K_star_z</span> <span class="o">@</span> <span class="n">alpha</span>
+
+<span class="k">def</span> <span class="nf">fitc_post_pred_cov</span><span class="p">(</span><span class="n">k</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sigma</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">zs</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">K_zz</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">B</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">x_star</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;FITC posterior predictive covariance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">K_star_star</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">x_star</span><span class="p">,</span> <span class="n">x_star</span><span class="p">)</span>
+    <span class="n">K_star_z</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">x_star</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span>
+    <span class="n">Q_star_star</span> <span class="o">=</span> <span class="n">K_star_z</span> <span class="o">@</span> <span class="n">cholesky_inv</span><span class="p">(</span><span class="n">K_zz</span><span class="p">)</span> <span class="o">@</span> <span class="n">K_star_z</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">K_star_star</span> <span class="o">-</span> <span class="n">Q_star_star</span> <span class="o">+</span> <span class="n">K_star_z</span> <span class="o">@</span> <span class="n">B</span> <span class="o">@</span> <span class="n">K_star_z</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="id1">
+<h3>Visualizing  the posterior predictive<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<p>We visualize the covariance of the posterior predictive by sampling a few times from the posterior predictive. Observe that the unertainty behavior of FITC approach is better now.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">alpha</span><span class="p">,</span> <span class="n">K_zz</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="n">fit_fitc</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">Sigma</span><span class="p">,</span> <span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span>
+<span class="n">post_mean</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x_star</span><span class="p">:</span> <span class="n">fitc_post_pred_mean</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">x_star</span><span class="p">))(</span><span class="n">test_xs</span><span class="p">)</span>
+<span class="n">post_cov</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x_star</span><span class="p">:</span> <span class="n">fitc_post_pred_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">Sigma</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">K_zz</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">x_star</span><span class="p">),</span> <span class="n">out_axes</span><span class="o">=</span><span class="mi">0</span><span class="p">)(</span><span class="n">test_xs</span><span class="p">)</span>
+<span class="n">post_ys</span> <span class="o">=</span> <span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,))</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">post_cov</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">post_mean</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">test_xs</span><span class="p">))]</span>
+
+<span class="k">with</span> <span class="n">PlotContext</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Samples Posterior Predictive (\sigma^2 = 0.01)&quot;</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Y&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ax</span><span class="p">:</span>
+    <span class="c1"># Plot dataset and inducing points</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Dataset&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_xs</span><span class="p">,</span> <span class="p">[</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">test_xs</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;f (unobserved)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">zs</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">zs</span><span class="p">),</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Inducing Points&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Plot posterior</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_xs</span><span class="p">,</span> <span class="n">post_mean</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;dotted&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;p(f_* | y)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_xs</span><span class="p">,</span> <span class="n">post_ys</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/4f105fc40e89dcaa28f3cb2b955d986b8b2c4437c49072eada0e3b84607e9cc5.png" src="../_images/4f105fc40e89dcaa28f3cb2b955d986b8b2c4437c49072eada0e3b84607e9cc5.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>We introduced the concept of using inducing points to summarize the entire dataset and make GP inference more tractable.</p></li>
+<li><p>We illustrated the SoR approach which is based on inducing points.</p></li>
+<li><p>We illustrated the FITC approach, another Sparse GP based on inducing points.</p></li>
+</ol>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>Joaquin Quinonero-Candela and Carl Edward Rasmussen. <a class="reference external" href="https://www.jmlr.org/papers/volume6/quinonero-candela05a/quinonero-candela05a.pdf">A Unifying View of Sparse Approximate Gaussian Process Regression</a></p></li>
+<li><p>Edward Snelson and Zoubin Ghahramani. <a class="reference external" href="https://papers.nips.cc/paper_files/paper/2005/file/4491777b1aa8b5b32c2e8666dbe1a495-Paper.pdf">Sparse Gaussian Processes using Pseudo-inputs</a>.</p></li>
+<li><p>J. Emmanuel Johnson. <a class="reference external" href="https://jejjohnson.github.io/research_journal/appendix/gps/2_sparse_gps/">Sparse GP Notes</a>.</p></li>
+</ol>
+</section>
+<section id="appendix">
+<h2>Appendix<a class="headerlink" href="#appendix" title="Link to this heading">#</a></h2>
+<section id="appendix-multivariate-normal-facts">
+<h3>Appendix: Multivariate Normal Facts<a class="headerlink" href="#appendix-multivariate-normal-facts" title="Link to this heading">#</a></h3>
+<section id="matrix-inversion-lemma-woodbury-sherman-morrison-formula">
+<h4>Matrix Inversion lemma (Woodbury, Sherman, Morrison formula)<a class="headerlink" href="#matrix-inversion-lemma-woodbury-sherman-morrison-formula" title="Link to this heading">#</a></h4>
+<p>The matrix inversion lemma is given below</p>
+<div class="math notranslate nohighlight">
+\[
+(Z + UWV^T)^{-1} = Z^{-1} - Z^{-1}U(W^{-1} + Z^TZ^{-1}U)^{-1}V^TZ^{-1} \,.
+\]</div>
+</section>
+</section>
+<section id="appendix-sor-simplification">
+<h3>Appendix: SoR Simplification<a class="headerlink" href="#appendix-sor-simplification" title="Link to this heading">#</a></h3>
+<p>We need to check
+$<span class="math notranslate nohighlight">\(
+K_{*u}(K_{uu} + K_{uf}\Sigma^{-1}K_{fu})^{-1}K_{uf} = Q_{*f}(Q_{ff} + \Sigma)^{-1}y \,.
+\)</span>$</p>
+<ol class="arabic simple">
+<li><p>Observe that</p></li>
+</ol>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+\phantom{\iff} &amp; Q_{ff} + \Sigma = Q_{ff} + \Sigma \tag{identity} \\
+\iff &amp; I = (Q_{ff} + \Sigma)^{-1}Q_{ff} + (Q_{ff} + \Sigma)^{-1}\Sigma \tag{mult by $(Q_{ff} + \Sigma)^{-1}$}\\
+\iff &amp; I - (Q_{ff} + \Sigma)^{-1}Q_{ff} = (Q_{ff} + \Sigma)^{-1}\Sigma \tag{rearrange} \\
+\iff &amp; Q_{*f} - Q_{*f}(Q_{ff} + \Sigma)^{-1}Q_{ff} = Q_{*f}(Q_{ff} + \Sigma)^{-1}\Sigma \tag{mult both sides by $Q_{*f}$} \\
+\iff &amp; K_{*u}K_{uu}^{-1}K_{uf} - K_{*u}K_{uu}^{-1}K_{uf}(K_{fu}K_{uu}^{-1}K_{uf} + \Sigma)^{-1}K_{fu}K_{uu}^{-1}K_{uf} = Q_{*f}(Q_{ff} + \Sigma)^{-1}\Sigma \tag{defn $Q_{ab}$} \\
+\iff &amp; K_{*u}(K_{uu}^{-1} - K_{uu}^{-1}K_{uf}(K_{fu}K_{uu}^{-1}K_{uf} + \Sigma)^{-1}K_{fu}K_{uu}^{-1})K_{uf} = Q_{*f}(Q_{ff} + \Sigma)^{-1}\Sigma \tag{factor} \\
+\iff &amp; K_{*u}(K_{uu} + K_{uf}\Sigma^{-1}K_{fu})^{-1} K_{uf} = Q_{*f}(Q_{ff} + \Sigma)^{-1}\Sigma \tag{matrix inversion lemma} \\
+\iff &amp; K_{*u}(K_{uu} + K_{uf}\Sigma^{-1}K_{fu})^{-1} K_{uf}\Sigma^{-1} = Q_{*f}(Q_{ff} + \Sigma)^{-1} \tag{mult $\Sigma$} \,.
+\end{align*}\]</div>
+<ol class="arabic simple" start="2">
+<li><p>We can perform a similar check for the covariance.</p></li>
+</ol>
+</section>
+<section id="appendix-unifying-view-of-sparse-gp">
+<h3>Appendix: Unifying View of Sparse GP<a class="headerlink" href="#appendix-unifying-view-of-sparse-gp" title="Link to this heading">#</a></h3>
+<p>Quinonero-Candela and Rasmussen [1] present a unifying construction for sparse GPs. The mean idea is to use an auxiliary random variable <span class="math notranslate nohighlight">\(u\)</span> to mediate the interaction between <span class="math notranslate nohighlight">\(f\)</span> and <span class="math notranslate nohighlight">\(f_*\)</span>.  In particular, we can rewrite the original joint distribution as</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+p(f, f_*) &amp; = \int p(f_*, f, u) du \tag{marginalization} \\
+&amp; = \int p(f_*, f | u) p(u) du \tag{factor}
+\end{align*}\]</div>
+<p>where the distribution on the auxiliary variable <span class="math notranslate nohighlight">\(u\)</span> is</p>
+<div class="math notranslate nohighlight">
+\[
+p(u) = \mathcal{N}(0, K_{uu}) \,.
+\]</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sample u</span>
+<span class="n">us</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">M</span><span class="p">),</span> <span class="n">cov</span><span class="o">=</span><span class="n">K_zz</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,))</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+
+<span class="c1"># Plot</span>
+<span class="k">with</span> <span class="n">PlotContext</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Possible Values at Inducing Points&quot;</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Y&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ax</span><span class="p">:</span>
+    <span class="c1"># Plot dataset and inducing points</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Dataset&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">f</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">)),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;f(unobserved)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">zs</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">zs</span><span class="p">),</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Inducing Points&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Plot samples</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">zs</span><span class="p">,</span> <span class="n">us</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;p(u_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/076fd66fb92ad723380aebd837a3a553ec8a4ed93f87d9a137498fa42967e9ae.png" src="../_images/076fd66fb92ad723380aebd837a3a553ec8a4ed93f87d9a137498fa42967e9ae.png" />
+</div>
+</div>
+<section id="unifying-1-sparse-gp-approximation">
+<h4>Unifying 1: Sparse GP Approximation<a class="headerlink" href="#unifying-1-sparse-gp-approximation" title="Link to this heading">#</a></h4>
+<p>Recall that</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+p(f_*, f) = \begin{pmatrix}
+K_{**} &amp; K_{*f} \\
+K_{f*} &amp; K_{ff}
+\end{pmatrix}
+\end{split}\]</div>
+<p>for a vanilla GP. We will introduce the approximation</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+p(f_*, f) &amp; \approx q(f_*, f) \tag{fundamental approximation} \\
+&amp; = \int q(f_* | u) q(f | u) p(u) du \tag{inducing point approximation}
+\end{align*}\]</div>
+<p>so that <span class="math notranslate nohighlight">\(f_*\)</span> and <span class="math notranslate nohighlight">\(f\)</span> are conditionally independent given <span class="math notranslate nohighlight">\(u \sim \mathcal{N}(0, K_{uu})\)</span>. Different choice of <span class="math notranslate nohighlight">\(q(f_*, f)\)</span> will then correspond to different approximations.</p>
+</section>
+<section id="unifying-2-sor-approximation">
+<h4>Unifying 2: SoR Approximation<a class="headerlink" href="#unifying-2-sor-approximation" title="Link to this heading">#</a></h4>
+<ol class="arabic simple">
+<li><p>The <strong>subset of regressors</strong> (SoR) method makes the following approximation to <span class="math notranslate nohighlight">\(p(f, f_*)\)</span> as</p></li>
+</ol>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+q_{SoR}\begin{pmatrix}
+f \\
+f_*
+\end{pmatrix} = \mathcal{N} \left( \begin{pmatrix}
+0 \\
+0
+\end{pmatrix}, \begin{pmatrix}
+Q_{ff} &amp; Q_{f*} \\
+Q_{*f} &amp; Q_{**}
+\end{pmatrix} \right)
+\end{split}\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[
+Q_{ab} = K_{au}K_{uu}^{-1}K_{ub} \,.
+\]</div>
+<p>Thus it is a GP regression with kernel <span class="math notranslate nohighlight">\(Q_{ab}\)</span>.</p>
+<ol class="arabic simple" start="2">
+<li><p>Observe that the joint distribution</p></li>
+</ol>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+q_{SoR}\begin{pmatrix}
+u \\
+f \\
+\end{pmatrix} = \mathcal{N} \left(
+\begin{pmatrix}
+0 \\
+0 \end{pmatrix}, 
+\begin{pmatrix}
+K_{uu} &amp; K_{uf} \\
+K_{fu} &amp; Q_{ff} \\
+\end{pmatrix}
+\right) 
+\end{split}\]</div>
+<p>has conditional distribution</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+q_{SoR}(f|u) &amp; = \mathcal{N}(K_{fu}K_{uu}^{-1}u, K_{fu}K_{uu}^{-1}k_{uf} - K_{fu}K_{uu}^{-1}K_{uf}) \\
+&amp; = \mathcal{N}(K_{fu}K_{uu}^{-1}u, 0) \,.
+\end{align*}\]</div>
+<p>and marginal distribution</p>
+<div class="math notranslate nohighlight">
+\[
+q_{SoR}(u) = \mathcal{N}(0, K_{uu})
+\]</div>
+<p>as expected.</p>
+</section>
+<section id="unifying-2-fitc-approximation">
+<h4>Unifying 2: FITC Approximation<a class="headerlink" href="#unifying-2-fitc-approximation" title="Link to this heading">#</a></h4>
+<ol class="arabic simple">
+<li><p>The FITC method makes the following approximation to <span class="math notranslate nohighlight">\(p(f, f_*)\)</span> as</p></li>
+</ol>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+q_{FITC}\begin{pmatrix}
+f \\
+f_*
+\end{pmatrix} = \mathcal{N} \left( \begin{pmatrix}
+0 \\
+0
+\end{pmatrix}, \begin{pmatrix}
+Q_{ff} - diag(Q_{ff} - K_{ff}) &amp; Q_{f*} \\
+Q_{*f} &amp; K_{**}
+\end{pmatrix} \right)
+\end{split}\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[
+Q_{ab} = K_{au}K_{uu}^{-1}K_{ub} \,.
+\]</div>
+<ol class="arabic simple" start="2">
+<li><p>Observe that the joint distribution</p></li>
+</ol>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+q_{FITC}\begin{pmatrix}
+u \\
+f \\
+\end{pmatrix} = \mathcal{N} \left(
+\begin{pmatrix}
+0 \\
+0 \end{pmatrix}, 
+\begin{pmatrix}
+K_{uu} &amp; Q_{uf} \\
+Q_{fu} &amp; Q_{ff} - diag(Q_{ff} - K_{ff}) \\
+\end{pmatrix}
+\right) 
+\end{split}\]</div>
+<p>has conditional distribution</p>
+<div class="math notranslate nohighlight">
+\[
+q_{FITC}(f | u) = \mathcal{N}(Q_{fu}K_{uu}^{-1}u, Q_{ff} - diag(Q_{ff} - K_{ff})) \,.
+\]</div>
+</section>
+<section id="unifying-3-comparing-conditionals-of-original-sor-and-fitc">
+<h4>Unifying 3: Comparing conditionals of original, SoR, and FITC<a class="headerlink" href="#unifying-3-comparing-conditionals-of-original-sor-and-fitc" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(p(f | u) = \mathcal{N}(K_{fu}K_{uu}^{-1}u, K_{ff} - K_{fu}K_{uu}^{-1}K_{uf})\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(q_{SoR}(f|u) = \mathcal{N}(K_{fu}K_{uu}^{-1}u, 0)\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(q_{FITC}(f | u) = \mathcal{N}(Q_{fu}K_{uu}^{-1}u, Q_{ff} - diag(Q_{ff} - K_{ff}))\)</span></p></li>
+</ul>
+</section>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./src"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="01b_krr.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Kernel Ridge Regression (KRR)</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="02b_krr_tikhonov.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">KRR with Tikhonov Regularization</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subset-of-regressors-sor">Subset of Regressors (SoR)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subset-of-regressors-sor-model">Subset of Regressors (SoR) Model</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sor-kernel-approximation">SoR Kernel Approximation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#notation">Notation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fitting-a-subset-of-regressors-sor-gp">Fitting a Subset of Regressors (SoR) GP</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-the-posterior-predictive">Visualizing  the posterior predictive</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fully-independent-training-conditional-fitc-approximation">Fully Independent Training Conditional (FITC) Approximation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Visualizing  the posterior predictive</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix">Appendix</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix-multivariate-normal-facts">Appendix: Multivariate Normal Facts</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#matrix-inversion-lemma-woodbury-sherman-morrison-formula">Matrix Inversion lemma (Woodbury, Sherman, Morrison formula)</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix-sor-simplification">Appendix: SoR Simplification</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix-unifying-view-of-sparse-gp">Appendix: Unifying View of Sparse GP</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#unifying-1-sparse-gp-approximation">Unifying 1: Sparse GP Approximation</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#unifying-2-sor-approximation">Unifying 2: SoR Approximation</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#unifying-2-fitc-approximation">Unifying 2: FITC Approximation</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#unifying-3-comparing-conditionals-of-original-sor-and-fitc">Unifying 3: Comparing conditionals of original, SoR, and FITC</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Daniel Huang
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,983 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Variational Gaussian Processes (VGPs) &#8212; Annotated GP</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css?v=be8a1c11" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=38455f92" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'src/03_var_gp';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Gaussian Process Regression with Derivatives (GPwDs)" href="04_gpwd.html" />
+    <link rel="prev" title="KRR with Tikhonov Regularization" href="02b_krr_tikhonov.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="01_intro_gp.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Annotated GP - Home"/>
+    <script>document.write(`<img src="../_static/logo.png" class="logo__image only-dark" alt="Annotated GP - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="01_intro_gp.html">
+                    Gaussian Processes (GP) and GP Regression
+                </a>
+            </li>
+        </ul>
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="01b_krr.html">Kernel Ridge Regression (KRR)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_sparse_sor_gp.html">Sparse GPs and Subset of Regressors (SoR)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02b_krr_tikhonov.html">KRR with Tikhonov Regularization</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Variational Gaussian Processes (VGPs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_gpwd.html">Gaussian Process Regression with Derivatives (GPwDs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_var_gpwd.html">Variational GPwDs (VGPwDs)</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/danehuang/annotated-gp" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/danehuang/annotated-gp/issues/new?title=Issue%20on%20page%20%2Fsrc/03_var_gp.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/src/03_var_gp.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Variational Gaussian Processes (VGPs)</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#vgp-model">VGP Model</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vgp-approximation">VGP Approximation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fitting-a-vgp">Fitting a VGP</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-the-posterior-predictive-1-no-inducing-points">Visualizing the Posterior Predictive 1: No Inducing Points</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-the-posterior-predictive-2-subset">Visualizing the Posterior Predictive 2: Subset</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix">Appendix</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix-vgp-derivation">Appendix: VGP Derivation</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#generative-process">Generative Process</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#vgp-derivation-elbo">VGP Derivation: ELBO</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#vgp-derivation-elbo-inner-integral">VGP Derivation: ELBO Inner Integral</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#vgp-derivation-continue-elbo-simplification">VGP Derivation: Continue ELBO Simplification</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#vgp-derivation-solving-elbo-for-q-u-step-1">VGP Derivation: Solving ELBO for q(u) step 1</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#vgp-derivation-solving-elbo-for-q-u-step-2">VGP Derivation: Solving ELBO for q(u) step 2</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix-posterior-predictive">Appendix: Posterior Predictive</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#variational-family">Variational Family</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#computing-posterior-predictive">Computing Posterior Predictive</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">random</span><span class="p">,</span> <span class="n">Array</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="kn">from</span> <span class="nn">gp</span> <span class="kn">import</span> <span class="n">k</span><span class="p">,</span> <span class="n">mk_cov</span><span class="p">,</span> <span class="n">cholesky_inv</span><span class="p">,</span> <span class="n">create_toy_sparse_dataset</span><span class="p">,</span> <span class="n">PlotContext</span>
+
+<span class="n">key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>  <span class="c1"># Create a random key                        </span>
+</pre></div>
+</div>
+</div>
+</div>
+<section class="tex2jax_ignore mathjax_ignore" id="variational-gaussian-processes-vgps">
+<h1>Variational Gaussian Processes (VGPs)<a class="headerlink" href="#variational-gaussian-processes-vgps" title="Link to this heading">#</a></h1>
+<p>In this notebook, we explore a Variational GP (VGP) which is a kind of sparse GP aimed at solving the scaling problems of GPs by approximating the GP posterior with <strong>variational inference</strong>. As before, we’ll reintroduce a toy dataset for illustrative purposes.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create dataset</span>
+<span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">xs</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">Sigma</span> <span class="o">=</span> <span class="n">create_toy_sparse_dataset</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+<span class="n">N</span><span class="p">,</span> <span class="n">M</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">zs</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">PlotContext</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Dataset&quot;</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Y&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ax</span><span class="p">:</span>
+    <span class="c1"># Plot dataset and inducing points</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Dataset&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">f</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">)),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;f (unobserved)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">zs</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">zs</span><span class="p">),</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Inducing Points&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/43f59a49ac5b8a2dedf45448e32df5cff315961f0f658ff0d25594640efd464b.png" src="../_images/43f59a49ac5b8a2dedf45448e32df5cff315961f0f658ff0d25594640efd464b.png" />
+</div>
+</div>
+<section id="vgp-model">
+<h2>VGP Model<a class="headerlink" href="#vgp-model" title="Link to this heading">#</a></h2>
+<p>In <strong>variational inference</strong>, we <em>approximate</em> a complex probability distribution <span class="math notranslate nohighlight">\(p\)</span> with a simpler distribution <span class="math notranslate nohighlight">\(q\)</span> from a variational family that has more tractable properties compared to <span class="math notranslate nohighlight">\(p\)</span>. In VGP [1], we choose the distribution <span class="math notranslate nohighlight">\(q(f, u)\)</span> to be a approximate the posterior <span class="math notranslate nohighlight">\(p(f, u | y)\)</span> where <span class="math notranslate nohighlight">\(u\)</span> are the evaluations of a function choosen at <span class="math notranslate nohighlight">\(M\)</span> inducing points <span class="math notranslate nohighlight">\(\{ z_i \}_{1 \leq i \leq M}\)</span>. That is, we will solve</p>
+<div class="math notranslate nohighlight">
+\[
+\operatorname{min} KL(q(f, u) || p(f, u | y))
+\]</div>
+<p>to obtain a <span class="math notranslate nohighlight">\(q(f, u) \approx p(f, u | y)\)</span>. Posterior predictive inference can then be performed by using the posterior predictive <span class="math notranslate nohighlight">\(q(f_* | y)\)</span>.</p>
+<section id="vgp-approximation">
+<h3>VGP Approximation<a class="headerlink" href="#vgp-approximation" title="Link to this heading">#</a></h3>
+<p>To construct the approximation <span class="math notranslate nohighlight">\(q(f, u)\)</span>, we choose</p>
+<div class="math notranslate nohighlight">
+\[
+q(f | u) = p(f | u)
+\]</div>
+<p>and solve for <span class="math notranslate nohighlight">\(q(u)\)</span> (See Appendix for derivation). This differs from the approach taken in SoR, which assumes that <span class="math notranslate nohighlight">\(q(u) \sim \mathcal{N}(0, K_{uu})\)</span> and approximates <span class="math notranslate nohighlight">\(p(f | u) \approx q_{SoR}(f | u)\)</span>. Titsias shows that</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+q(u) &amp; = \mathcal{N}(u \,|\, K_{zz}C^{-1}K_{zx}\Sigma^{-1} y, K_{zz}C^{-1}K_{zz})
+\end{align*}\]</div>
+<p>where <span class="math notranslate nohighlight">\(C = K_{zz} + K_{zx}\Sigma^{-1} K_{xz}\)</span>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Compute kernel</span>
+<span class="n">K_zz</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span>
+<span class="n">K_zx</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">xs</span><span class="p">)</span>
+<span class="n">K_xz</span> <span class="o">=</span> <span class="n">K_zx</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+
+<span class="c1"># Compute mean and covariance</span>
+<span class="n">Sigma_inv</span> <span class="o">=</span> <span class="n">cholesky_inv</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
+<span class="n">C</span> <span class="o">=</span> <span class="n">K_zz</span> <span class="o">+</span> <span class="n">K_zx</span> <span class="o">@</span> <span class="n">Sigma_inv</span> <span class="o">@</span> <span class="n">K_xz</span>
+<span class="n">C_inv</span> <span class="o">=</span> <span class="n">cholesky_inv</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
+<span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="n">K_zz</span> <span class="o">@</span> <span class="n">C_inv</span> <span class="o">@</span> <span class="n">K_zx</span> <span class="o">@</span> <span class="n">Sigma_inv</span> <span class="o">@</span> <span class="n">ys</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">cov</span> <span class="o">=</span> <span class="n">K_zz</span> <span class="o">@</span> <span class="n">C_inv</span> <span class="o">@</span> <span class="n">K_zz</span>
+
+<span class="c1"># Sample q(u)</span>
+<span class="n">us</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="n">cov</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,))</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+
+<span class="k">with</span> <span class="n">PlotContext</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Possible Values at Inducing Points&quot;</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Y&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ax</span><span class="p">:</span>
+    <span class="c1"># Plot dataset and inducing points</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Dataset&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">f</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">)),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;f (unobserved)&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Plot q(u)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">zs</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">zs</span><span class="p">),</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Inducing Points&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">zs</span><span class="p">,</span> <span class="n">us</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;q(u_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/d0c8004c1d8b746ab309c9b57e3de431e7cfb465aae672e867c10a5a8eb52bd7.png" src="../_images/d0c8004c1d8b746ab309c9b57e3de431e7cfb465aae672e867c10a5a8eb52bd7.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="fitting-a-vgp">
+<h2>Fitting a VGP<a class="headerlink" href="#fitting-a-vgp" title="Link to this heading">#</a></h2>
+<p>The posterior predictive of a VGP (see Titsias [2], eq 6 and also the Appendix) is</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+q(f_* | y) &amp; = \mathcal{N}(K_{*z}C^{-1}K_{zx}\Sigma^{-1}y, K_{* *} - K_{*z}(K_{zz}^{-1} - C^{-1})K_{z*}) \,.
+\end{align*}\]</div>
+<p>As a reminder, <span class="math notranslate nohighlight">\(C = K_{zz} + K_{zx}\Sigma^{-1} K_{xz}\)</span>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">fit_vgp</span><span class="p">(</span><span class="n">k</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sigma</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">xs</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ys</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">zs</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
+    <span class="c1"># Compute covariances</span>
+    <span class="n">K_zz</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span>
+    <span class="n">K_xz</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">xs</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span>
+    <span class="n">K_zx</span> <span class="o">=</span> <span class="n">K_xz</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+    <span class="n">K_zz_inv</span> <span class="o">=</span> <span class="n">cholesky_inv</span><span class="p">(</span><span class="n">K_zz</span><span class="p">)</span>
+    
+    <span class="c1"># Perform approximations</span>
+    <span class="n">Sigma_inv</span> <span class="o">=</span> <span class="n">cholesky_inv</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">K_zz</span> <span class="o">+</span> <span class="n">K_zx</span> <span class="o">@</span> <span class="n">Sigma_inv</span> <span class="o">@</span> <span class="n">K_xz</span>
+    <span class="n">C_inv</span> <span class="o">=</span> <span class="n">cholesky_inv</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
+    
+    <span class="n">alpha</span> <span class="o">=</span> <span class="n">C_inv</span> <span class="o">@</span> <span class="n">K_zx</span> <span class="o">@</span> <span class="n">Sigma_inv</span> <span class="o">@</span> <span class="n">ys</span>
+    <span class="n">cov</span> <span class="o">=</span> <span class="n">K_zz_inv</span> <span class="o">-</span> <span class="n">C_inv</span>
+    
+    <span class="k">return</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">cov</span><span class="p">,</span> <span class="n">K_zz</span><span class="p">,</span> <span class="n">K_zz_inv</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">vgp_post_pred_mean</span><span class="p">(</span><span class="n">k</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">zs</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">x_star</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Posterior predictive mean.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">K_star_z</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">x_star</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">K_star_z</span> <span class="o">@</span> <span class="n">alpha</span>
+
+
+<span class="k">def</span> <span class="nf">vgp_post_pred_cov</span><span class="p">(</span><span class="n">k</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">zs</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">cov</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">x_star</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Posterior predictive covariance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">K_star_star</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">x_star</span><span class="p">,</span> <span class="n">x_star</span><span class="p">)</span>
+    <span class="n">K_star_z</span> <span class="o">=</span> <span class="n">mk_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">x_star</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">K_star_star</span> <span class="o">-</span> <span class="n">K_star_z</span> <span class="o">@</span> <span class="n">cov</span> <span class="o">@</span> <span class="n">K_star_z</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="visualizing-the-posterior-predictive-1-no-inducing-points">
+<h3>Visualizing the Posterior Predictive 1: No Inducing Points<a class="headerlink" href="#visualizing-the-posterior-predictive-1-no-inducing-points" title="Link to this heading">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fit</span>
+<span class="n">zs_all_xs</span> <span class="o">=</span> <span class="n">xs</span>
+<span class="n">alpha_all_xs</span><span class="p">,</span> <span class="n">cov_all_xs</span><span class="p">,</span> <span class="n">K_zz_all_xs</span><span class="p">,</span> <span class="n">K_zz_inv_all_xs</span> <span class="o">=</span> <span class="n">fit_vgp</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">Sigma</span><span class="p">,</span> <span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">zs_all_xs</span><span class="p">)</span>
+
+<span class="c1"># Predict</span>
+<span class="n">test_xs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">post_ys</span> <span class="o">=</span> <span class="p">[</span><span class="n">vgp_post_pred_mean</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zs_all_xs</span><span class="p">,</span> <span class="n">alpha_all_xs</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">test_xs</span><span class="p">]</span>
+<span class="n">post_mean</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x_star</span><span class="p">:</span> <span class="n">vgp_post_pred_mean</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zs_all_xs</span><span class="p">,</span> <span class="n">alpha_all_xs</span><span class="p">,</span> <span class="n">x_star</span><span class="p">))(</span><span class="n">test_xs</span><span class="p">)</span>
+<span class="n">post_cov</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x_star</span><span class="p">:</span> <span class="n">vgp_post_pred_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zs_all_xs</span><span class="p">,</span> <span class="n">cov_all_xs</span><span class="p">,</span> <span class="n">x_star</span><span class="p">),</span> <span class="n">out_axes</span><span class="o">=</span><span class="mi">0</span><span class="p">)(</span><span class="n">test_xs</span><span class="p">)</span>
+<span class="n">post_cov_ys</span> <span class="o">=</span> <span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,))</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">post_cov</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">post_mean</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">test_xs</span><span class="p">))]</span>
+
+<span class="k">with</span> <span class="n">PlotContext</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;VGP (Inducing Points = Data)&quot;</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Y&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ax</span><span class="p">:</span>
+    <span class="c1"># Plot dataset and inducing points</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">ys</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Dataset&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">f</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">)),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;f (unobserved)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">zs_all_xs</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">zs_all_xs</span><span class="p">),</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Inducing Points&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Plot p(f(*) | y)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_xs</span><span class="p">,</span> <span class="n">post_ys</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;q(f_* | y)&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;dotted&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_xs</span><span class="p">,</span> <span class="n">post_cov_ys</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/91779e4ef25ef1d20bba064eecffcc42adfc25616352cb9ad003c88f12af7e4c.png" src="../_images/91779e4ef25ef1d20bba064eecffcc42adfc25616352cb9ad003c88f12af7e4c.png" />
+</div>
+</div>
+</section>
+<section id="visualizing-the-posterior-predictive-2-subset">
+<h3>Visualizing the Posterior Predictive 2: Subset<a class="headerlink" href="#visualizing-the-posterior-predictive-2-subset" title="Link to this heading">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fit</span>
+<span class="n">zs_p</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">xs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">xs</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">]])</span>
+<span class="n">alpha_p</span><span class="p">,</span> <span class="n">cov_p</span><span class="p">,</span> <span class="n">K_zz_p</span><span class="p">,</span> <span class="n">K_zz_inv_p</span> <span class="o">=</span> <span class="n">fit_vgp</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">Sigma</span><span class="p">,</span> <span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">zs_p</span><span class="p">)</span>
+
+<span class="c1"># Predict</span>
+<span class="n">test_xs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">post_ys</span> <span class="o">=</span> <span class="p">[</span><span class="n">vgp_post_pred_mean</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zs_p</span><span class="p">,</span> <span class="n">alpha_p</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">test_xs</span><span class="p">]</span>
+<span class="n">post_mean</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x_star</span><span class="p">:</span> <span class="n">vgp_post_pred_mean</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zs_p</span><span class="p">,</span> <span class="n">alpha_p</span><span class="p">,</span> <span class="n">x_star</span><span class="p">))(</span><span class="n">test_xs</span><span class="p">)</span>
+<span class="n">post_cov</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x_star</span><span class="p">:</span> <span class="n">vgp_post_pred_cov</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">zs_p</span><span class="p">,</span> <span class="n">cov_p</span><span class="p">,</span> <span class="n">x_star</span><span class="p">),</span> <span class="n">out_axes</span><span class="o">=</span><span class="mi">0</span><span class="p">)(</span><span class="n">test_xs</span><span class="p">)</span>
+<span class="n">post_cov_ys</span> <span class="o">=</span> <span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,))</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">post_cov</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">post_mean</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">test_xs</span><span class="p">))]</span>
+
+<span class="c1"># Plot</span>
+<span class="k">with</span> <span class="n">PlotContext</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;VGP (Inducing Points Subset of Data)&quot;</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Y&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ax</span><span class="p">:</span>
+    <span class="c1"># Plot dataset and inducing points</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">ys</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Dataset&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">f</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">)),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;f (unobserved)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">zs_all_xs</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">zs_all_xs</span><span class="p">),</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;None&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Inducing Points&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Plot p(f(*) | y)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_xs</span><span class="p">,</span> <span class="n">post_ys</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;q(f_* | y)&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;dotted&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test_xs</span><span class="p">,</span> <span class="n">post_cov_ys</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/51986937cb4d25a18db5913af6cc1d98fd4771673bd051059fb817753e00d0ba.png" src="../_images/51986937cb4d25a18db5913af6cc1d98fd4771673bd051059fb817753e00d0ba.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>We have seen how variational inference can be applied to make GP inference tractable.</p></li>
+<li><p>We have illustrated VGP on a toy dataset.</p></li>
+</ol>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p><a class="reference external" href="https://mtitsias.github.io/files/sparseGPv2.pdf">Variational Model Selection for Sparse Gaussian Process Regression</a></p></li>
+<li><p><a class="reference external" href="https://proceedings.mlr.press/v5/titsias09a/titsias09a.pdf">Variational Learning of Inducing Variables in Sparse Gaussian
+Processes</a></p></li>
+</ol>
+</section>
+<section id="appendix">
+<h2>Appendix<a class="headerlink" href="#appendix" title="Link to this heading">#</a></h2>
+<section id="appendix-vgp-derivation">
+<h3>Appendix: VGP Derivation<a class="headerlink" href="#appendix-vgp-derivation" title="Link to this heading">#</a></h3>
+<p>We want to solve</p>
+<div class="math notranslate nohighlight">
+\[
+\operatorname{min} KL(q(f, u) || p(f, u | y))
+\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[
+q(f, u) = p(f | u) q(u) \,.
+\]</div>
+<p>Titsias shows that</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+q(u) &amp; = \mathcal{N}(u \,|\, K_{zz}C^{-1}K_{zx}\Sigma^{-1} y, K_{zz}C^{-1}K_{zz})
+\end{align*}\]</div>
+<p>where <span class="math notranslate nohighlight">\(C = K_{zz} + K_{zx}\Sigma^{-1} K_{xz}\)</span>.</p>
+<section id="generative-process">
+<h4>Generative Process<a class="headerlink" href="#generative-process" title="Link to this heading">#</a></h4>
+<p>As a reminder, the generative process for a GP with inducing points is</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+    u(z) &amp; \sim \mathcal{N}(0, K_{zz}) \\
+    f(x) \,|\, u(z) &amp; \sim \mathcal{N}(K_{xz}K_{zz}^{-1}u(z), K_{xx} - Q_{xx}) \\
+    \epsilon &amp; \sim \mathcal{N}(0, \Sigma) \\
+    y &amp; = f(x) + \epsilon
+\end{align*}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\Sigma = \beta^2I\)</span> and <span class="math notranslate nohighlight">\(Q_{xx} = K_{xz}K_{zz}^{-1}K_{zx}\)</span>. We will abbreviate <span class="math notranslate nohighlight">\(u(z) = u\)</span> and <span class="math notranslate nohighlight">\(f(x) = f\)</span>.</p>
+<p>Note that</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+p(f, u) = \mathcal{N} \left(f, u | 0, 
+\begin{pmatrix}
+K_{xx} &amp; K_{xz} \\
+K_{zx} &amp; K_{zz}
+\end{pmatrix}
+\right) \,.
+\end{split}\]</div>
+</section>
+<section id="vgp-derivation-elbo">
+<h4>VGP Derivation: ELBO<a class="headerlink" href="#vgp-derivation-elbo" title="Link to this heading">#</a></h4>
+<p>Titsias shows in Appendix A [1] that</p>
+<div class="amsmath math notranslate nohighlight" id="equation-d38fdb57-82a6-47f9-bc27-9a2fc1d8ef74">
+<span class="eqno">(1)<a class="headerlink" href="#equation-d38fdb57-82a6-47f9-bc27-9a2fc1d8ef74" title="Permalink to this equation">#</a></span>\[\begin{align}
+    \text{ELBO}(q(f, u)) &amp; = \int q(f, u) \log \frac{p(y, f, u)}{q(f, u)} df du \tag{defn ELBO} \\
+    &amp; = \int p(f \,|\, u) q(u) \log \frac{p(y \,|\, f) p(f \,|\, u) p(u)}{p(f \,|\, u) q(u)} df du \tag{defn $p$ and $q$} \\
+    &amp; = \int p(f \,|\, u) q(u) \log \frac{p(y \,|\, f) p(u)}{q(u)} df du \tag{cancel} \\
+    &amp; = \int \left[ \int \left( \log p(y \,|\, f) + \log \frac{p(u)}{q(u)} \right) p(f \,|\, u) df \right] q(u) du \tag{rearrange} \\
+    &amp; = \int \left[ \int \log p(y \,|\, f) \cdot p(f \,|\, u) df + \log \frac{p(u)}{q(u)} \right] q(u) du \tag{linearity and integrate} \,.
+\end{align}\]</div>
+</section>
+<section id="vgp-derivation-elbo-inner-integral">
+<h4>VGP Derivation: ELBO Inner Integral<a class="headerlink" href="#vgp-derivation-elbo-inner-integral" title="Link to this heading">#</a></h4>
+<p>We solve for the inner integral. Titsias further shows in Appendix A [1] that</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+    &amp; \phantom{=} \int \log p(y \,|\, f) \cdot p(f \,|\, u) df \notag \\
+    &amp; = \int \log \left[ (2\pi)^{-N/2} \beta^{-N} \exp \left( -\frac{1}{2} (y - f)^T\Sigma^{-1}(y - f) \right) \right] p(f \,|\, u) df \tag{Gaussian pdf} \\
+    &amp; = \int \left[ -\frac{N}{2} \log 2\pi\beta^2 + \left( -\frac{1}{2} (y - f)^T\Sigma^{-1}(y - f) \right) \right] p(f \,|\, u) df \tag{log} \\
+    &amp; = \int \left[ -\frac{N}{2} \log 2\pi\beta^2 - \frac{1}{2\beta^2}Tr(yy^T - 2y f^T + ff^T) \right] p(f \,|\, u) df \tag{trace rearrange} \\
+    &amp; = -\frac{N}{2} \log 2\pi\beta^2 - \frac{1}{2\beta^2} \int Tr(yy^T - 2y f^T + ff^T) p(f \,|\, u) df \tag{linearity and integrate} \\
+    &amp; = -\frac{N}{2} \log 2\pi\beta^2 - \frac{1}{2\beta^2} \int (Tr(yy^T) - Tr(2y f^T) + Tr(ff^T)) p(f \,|\, u) df \tag{linearity trace} \\
+    &amp; = -\frac{N}{2} \log 2\pi\beta^2 - \frac{1}{2\beta^2} \left((Tr(yy^T) + \int - Tr(2y f^T) + Tr(ff^T)) p(f \,|\, u) df \right) \tag{indep} \\
+    &amp; = -\frac{N}{2} \log 2\pi\beta^2 - \frac{1}{2\beta^2} \left((Tr(yy^T) - Tr(2y \alpha^T) +  \int Tr(ff^T)) p(f \,|\, u) df \right) \tag{mean} \\
+    &amp; = -\frac{N}{2} \log 2\pi\beta^2 - \frac{1}{2\beta^2} \left((Tr(yy^T) - Tr(2y \alpha^T) + Tr(\alpha\alpha^T + B) \right) \tag{second moment} \\
+    &amp; = -\frac{N}{2}\log 2\pi\beta^2 - \frac{1}{2\beta^2}Tr(yy^T - 2y\alpha^T + \alpha\alpha^T) - \frac{1}{2\beta^2}Tr(B) \tag{linearity trace} \\
+    &amp; = -\frac{N}{2}\log 2\pi\beta^2 - \frac{1}{2\beta^2}(y - \alpha)^T \Sigma^{-1}(y - \alpha)- \frac{1}{2\beta^2}Tr(B) \tag{algebra} \\
+    &amp; = \log \mathcal{N}(y \,|\, \alpha, \Sigma) - \frac{1}{2\beta^2}Tr(B) \tag{Gaussian pdf}
+\end{align*}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\alpha = K_{xz}K_{zz}^{-1}u\)</span> is mean of <span class="math notranslate nohighlight">\(p(f \,|\, u)\)</span> and <span class="math notranslate nohighlight">\(B = K_{xx} - Q_{xx}\)</span> is covariance of <span class="math notranslate nohighlight">\(p(f \,|\, u)\)</span>.</p>
+</section>
+<section id="vgp-derivation-continue-elbo-simplification">
+<h4>VGP Derivation: Continue ELBO Simplification<a class="headerlink" href="#vgp-derivation-continue-elbo-simplification" title="Link to this heading">#</a></h4>
+<p>We can now continue to simplify the ELBO.</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+    \text{ELBO}(q(f, u)) &amp; = \int \left[ \int \log p(y \,|\, f) \cdot p(f \,|\, u) df + \log \frac{p(u)}{q(u)} \right] q(u) du \tag{defn} \\
+    &amp; = \int \left[ \log \mathcal{N}(y \,|\, \alpha, \Sigma) - \frac{1}{2\beta^2}Tr(B) + \log \frac{p(u)}{q(u)} \right] q(u) du \tag{previous} \\
+    &amp; = \int \left[ \log \mathcal{N}(y \,|\, \alpha, \Sigma) + \log \frac{p(u)}{q(u)} \right] q(u) du - \frac{1}{2\beta^2}Tr(B) \tag{linearity and integrate} \\
+    &amp; = \int \left[ \log \frac{\mathcal{N}(y \,|\, \alpha, \Sigma) p(u)}{q(u)} \right] q(u) du - \frac{1}{2\beta^2}Tr(B) \tag{log, Eq *} \\
+    &amp; \leq \log \int \left[\frac{\mathcal{N}(y \,|\, \alpha, \Sigma) p(u)}{q(u)} \right] q(u) du - \frac{1}{2\beta^2}Tr(B) \tag{Jensen's} \\
+    &amp; \leq \log \int \mathcal{N}(y \,|\, \alpha, \Sigma) p(u) du - \frac{1}{2\beta^2}Tr(B) \tag{simpl} \\
+    &amp; = \log \int \mathcal{N}\left(
+    \begin{pmatrix}
+        y \\
+        u
+    \end{pmatrix} \,|\,
+    \begin{pmatrix}
+        0 \\
+        K_{xz}K_{zz}^{-1}u
+    \end{pmatrix}, \begin{pmatrix}
+        K_{zz} &amp; K_{zx} \\
+        K_{xz} &amp; \Sigma
+    \end{pmatrix}\right) du - \frac{1}{2\beta^2}Tr(B) \tag{joint/cond} \\
+    &amp; = \log \mathcal{N}(y \,|\, 0, \Sigma + K_{xz}K_{zz}^{-1}K_{zx}) - \frac{1}{2\beta^2}Tr(B) \tag{marg} 
+\end{align*}\]</div>
+</section>
+<section id="vgp-derivation-solving-elbo-for-q-u-step-1">
+<h4>VGP Derivation: Solving ELBO for q(u) step 1<a class="headerlink" href="#vgp-derivation-solving-elbo-for-q-u-step-1" title="Link to this heading">#</a></h4>
+<p>We now need to find the optimal <span class="math notranslate nohighlight">\(q(u)\)</span>. We can see that <span class="math notranslate nohighlight">\(q(u) \propto \mathcal{N}(y \,|\, \alpha, \Sigma) p(u)\)</span> by differentiating the ELBO at Eq * w.r.t. <span class="math notranslate nohighlight">\(q(u)\)</span> and setting it to <span class="math notranslate nohighlight">\(0\)</span>.</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+    q(u) &amp; \propto \mathcal{N}(y \,|\, \alpha, \Sigma) p(u) \tag{*} \\
+    &amp; = c_1 \exp\left[ -\frac{1}{2}(y - \alpha)^T\Sigma^{-1} (y - \alpha) \right] c_2 \exp\left[ -\frac{1}{2}u^T K_{zz}^{-1}u \right] \tag{pdf} \\
+    &amp; = c_1 c_2 \exp\left[ -\frac{1}{2}(y - \alpha)^T\Sigma^{-1} (y - \alpha) -\frac{1}{2}u^T K_{zz}^{-1}u \right] \tag{simpl} \\
+    &amp; = c_1 c_2 \exp\left[ -\frac{1}{2}\left( y^T\Sigma^{-1} y - 2y^T \Sigma^{-1} \alpha + \alpha^T \Sigma^{-1} \alpha + u^T K_{zz}^{-1}u \right) \right] \tag{simpl} \\
+    &amp; = c_1 c_2 c_3 \exp\left[ -\frac{1}{2}\left(-2y^T \Sigma^{-1} \alpha + \alpha^T \Sigma^{-1} \alpha + u^T K_{zz}^{-1}u \right) \right] \tag{simpl} \\
+    &amp; = c \exp\left[ -\frac{1}{2}\left(-2y^T \Sigma^{-1} (K_{xz}K_{zz}^{-1}u) + u^T K_{zz}^{-1} K_{zx} \Sigma^{-1} K_{xz}K_{zz}^{-1}u + u^T K_{zz}^{-1}u \right) \right] \tag{defn $\alpha$} \\
+    &amp; = c \exp\left[ -\frac{1}{2}\left(u^T (K_{zz}^{-1} + K_{zz}^{-1} K_{zx} \Sigma^{-1} K_{xz}K_{zz}^{-1})u - 2y^T \Sigma^{-1} K_{xz}K_{zz}^{-1}u \right) \right] \tag{rearrange}
+\end{align*}\]</div>
+</section>
+<section id="vgp-derivation-solving-elbo-for-q-u-step-2">
+<h4>VGP Derivation: Solving ELBO for q(u) step 2<a class="headerlink" href="#vgp-derivation-solving-elbo-for-q-u-step-2" title="Link to this heading">#</a></h4>
+<p>We can complete the square using</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+    x^TMx - 2b^Tx = (x - M^{-1}b)^TM(x - M^{-1}b) - b^Tb
+\end{align*}\]</div>
+<p>to obtain</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+    q(u) = \mathcal{N}(u \,|\, D^{-1}K_{zz}^{-1}K_{zx}\Sigma^{-1} y, D^{-1})
+\end{align*}\]</div>
+<p>where</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+D = K_{zz}^{-1}K_{zx}\Sigma^{-1} K_{xz}K_{zz}^{-1} + K_{zz}^{-1} \,.
+\end{align*}\]</div>
+<p>Titsias further simplies this to</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+    q(u) &amp; = \mathcal{N}(u \,|\, K_{zz}C^{-1}K_{zx}\Sigma^{-1} y, K_{zz}C^{-1}K_{zz})
+\end{align*}\]</div>
+<p>where <span class="math notranslate nohighlight">\(C = K_{zz} + K_{zx}\Sigma^{-1} K_{xz}\)</span> as required.</p>
+</section>
+</section>
+<section id="appendix-posterior-predictive">
+<h3>Appendix: Posterior Predictive<a class="headerlink" href="#appendix-posterior-predictive" title="Link to this heading">#</a></h3>
+<section id="variational-family">
+<h4>Variational Family<a class="headerlink" href="#variational-family" title="Link to this heading">#</a></h4>
+<p>Note that</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+q(f, u) = \mathcal{N} \left(
+\begin{pmatrix}
+f \\
+u \\
+\end{pmatrix} |
+\begin{pmatrix}
+K_{xz}K_{zz}^{-1}m \\
+m \\
+\end{pmatrix},
+\begin{pmatrix}
+K_{xx} - K_{xz}K_{zz}^{-1}(K_{zz} - A)K_{zz}^{-1}K_{zx} &amp; K_{xz}K_{zz}^{-1}A \\
+AK_{zz}^{-1}K_{zx} &amp; A \\
+\end{pmatrix}
+\right)
+\end{split}\]</div>
+<p>where</p>
+<ol class="arabic simple">
+<li><p><span class="math notranslate nohighlight">\(m = K_{zz} C^{-1} K_{zx}\Sigma^{-1}y\)</span>,</p></li>
+<li><p><span class="math notranslate nohighlight">\(A = K_{zz} C^{-1} K_{zz}\)</span>, and</p></li>
+<li><p><span class="math notranslate nohighlight">\(C = (K_{zz} + K_{zx}\Sigma^{-1}K_{xz})\)</span>.</p></li>
+</ol>
+</section>
+<section id="computing-posterior-predictive">
+<h4>Computing Posterior Predictive<a class="headerlink" href="#computing-posterior-predictive" title="Link to this heading">#</a></h4>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+    q(f(*) \,|\, y) &amp; = \int p(f(*) \,|\, f, u) q(f, u) df du \tag{marg} \\
+    &amp; = \int p(f(*) \,|\, f, u) p(f \,|\, u) q(u) df du \tag{factor} \\
+    &amp; = \int p(f(*), f \,|\, u) q(u) df du \tag{factor} \\
+    &amp; = \int q(*, u) du \tag{defn} \\
+    &amp; = \mathcal{N}(K_{*z}K_{zz}^{-1}m, K_{* *} - K_{*z}K_{zz}^{-1}(K_{zz} - A)K_{zz}^{-1}K_{z*}) \tag{marg} \\
+    &amp; = \mathcal{N}(K_{*z}K_{zz}^{-1}K_{zz} C^{-1} K_{zx}\Sigma^{-1}y, K_{* *} - K_{*z}K_{zz}^{-1}(K_{zz} - A)K_{zz}^{-1}K_{z*}) \tag{subst m} \\
+    &amp; = \mathcal{N}(K_{*z} C^{-1} K_{zx}\Sigma^{-1}y, K_{* *} - K_{*z}K_{zz}^{-1}(K_{zz} - A)K_{zz}^{-1}K_{z*}) \tag{simplify} \\
+    &amp; = \mathcal{N}(K_{*z} C^{-1} K_{zx}\Sigma^{-1}y, K_{* *} - K_{*z}K_{zz}^{-1}K_{z*} + K_{*z}K_{zz}^{-1}AK_{zz}^{-1}K_{z*}) \tag{distribute} \\
+    &amp; = \mathcal{N}(K_{*z} C^{-1} K_{zx}\Sigma^{-1}y, K_{* *} - K_{*z}K_{zz}^{-1}K_{z*} + K_{*z}C^{-1}K_{z*}) \tag{subst A} \\
+    &amp; = \mathcal{N}(K_{*z} C^{-1} K_{zx}\Sigma^{-1}y, K_{* *} - K_{*z}(K_{zz}^{-1} - C^{-1})K_{z*}) \tag{rearrange} \\
+\end{align*}\]</div>
+</section>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./src"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="02b_krr_tikhonov.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">KRR with Tikhonov Regularization</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="04_gpwd.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Gaussian Process Regression with Derivatives (GPwDs)</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#vgp-model">VGP Model</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vgp-approximation">VGP Approximation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fitting-a-vgp">Fitting a VGP</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-the-posterior-predictive-1-no-inducing-points">Visualizing the Posterior Predictive 1: No Inducing Points</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-the-posterior-predictive-2-subset">Visualizing the Posterior Predictive 2: Subset</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix">Appendix</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix-vgp-derivation">Appendix: VGP Derivation</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#generative-process">Generative Process</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#vgp-derivation-elbo">VGP Derivation: ELBO</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#vgp-derivation-elbo-inner-integral">VGP Derivation: ELBO Inner Integral</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#vgp-derivation-continue-elbo-simplification">VGP Derivation: Continue ELBO Simplification</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#vgp-derivation-solving-elbo-for-q-u-step-1">VGP Derivation: Solving ELBO for q(u) step 1</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#vgp-derivation-solving-elbo-for-q-u-step-2">VGP Derivation: Solving ELBO for q(u) step 2</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix-posterior-predictive">Appendix: Posterior Predictive</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#variational-family">Variational Family</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#computing-posterior-predictive">Computing Posterior Predictive</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Daniel Huang
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
