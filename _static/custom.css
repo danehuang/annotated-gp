@@ -1,0 +1,17 @@
+.p {
+  overflow-x: auto;  /* Add horizontal scroll for large equations */
+}
+
+.mjx-container {
+    overflow-x: auto;  /* Add horizontal scroll for large equations */
+    display: block;    /* Ensure display block for better handling */
+    white-space: nowrap;  /* Prevent wrapping */
+  }
+  
+.mjx-math {
+    overflow-x: auto;  /* Add horizontal scroll for large equations */
+    display: block;    /* Ensure display block for better handling */
+    white-space: nowrap;  /* Prevent wrapping */
+    max-width: 100%;
+    overflow: auto;
+}

@@ -1,0 +1,13 @@
+# Table of contents
+# Learn more at https://jupyterbook.org/customize/toc.html
+
+format: jb-book
+root: src/01_intro_gp.ipynb
+chapters:
+# - file: src/01_intro_gp.ipynb
+- file: src/01b_krr.ipynb
+- file: src/02_sparse_sor_gp.ipynb
+- file: src/02b_krr_tikhonov.ipynb
+- file: src/03_var_gp.ipynb
+- file: src/04_gpwd.ipynb
+- file: src/05_var_gpwd.ipynb
