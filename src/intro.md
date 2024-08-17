@@ -1,6 +1,6 @@
 # The Annotated GP
 
-This series of notebooks contains an introduction to Gaussian Processes (GPs).
+This series of notebooks contains a tutorial on Gaussian Processes (GPs).
 We'll cover the basics of GPs, the closely related Kernel Ridge Regression (KRR),
 sparse GPs (including Variational GPs), and GPs that fit derivatives.
 
