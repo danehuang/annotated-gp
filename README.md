@@ -1,14 +1,15 @@
 # The Annotated GP
 
-A short introduction to Gaussian Processes (GPs).
+An introduction to Gaussian Processes (GPs). Topics include the basics of GPs,
+the closely related Kernel Ridge Regression (KRR), sparse GPs (including Variational GPs),
+and GPs that fit derivatives.
 
 Web version: [https://danehuang.github.io/annotated-gp](https://danehuang.github.io/annotated-gp/)
 
 
 ## Citation
 
-If you found this useful, please cite our repository as
-
+If you found this useful, please cite our repository!
 ```
 @misc{huang2024annotatedgp,
   author       = {Daniel Huang},
