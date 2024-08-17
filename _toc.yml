@@ -2,7 +2,7 @@
 # Learn more at https://jupyterbook.org/customize/toc.html
 
 format: jb-book
-root: src/intro.md
+root: src/INTRO.md
 chapters:
 - file: src/01_intro_gp.ipynb
 - file: src/01b_krr.ipynb
